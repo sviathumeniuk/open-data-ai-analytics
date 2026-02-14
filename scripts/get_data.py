@@ -1,9 +1,10 @@
 import requests
 import pandas as pd
+import sys
 from pathlib import Path
 
-DATA_DIR = Path(__file__).parent.parent / "data" / "raw"
-DATA_URL = "https://data.gov.ua/dataset/95d06529-0367-48da-96dd-c6eb9beeedf3/resource/e5af2194-f78d-46df-9de0-7eeb4155c0e6/download/pdv_actual_28-08-2019.csv"
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from src.config import DATA_DIR, DATA_FILE, DATA_URL, REQUEST_TIMEOUT, CSV_SEP, CSV_ENCODING, CSV_ON_BAD_LINES
 
 
 def download_data():
@@ -12,22 +13,20 @@ def download_data():
     print("Завантаження даних...")
     
     try:
-        response = requests.get(DATA_URL, timeout=30)
+        response = requests.get(DATA_URL, timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
         
-        output_file = DATA_DIR / "pdv_actual_28-08-2019.csv"
-        with open(output_file, "wb") as f:
+        with open(DATA_FILE, "wb") as f:
             f.write(response.content)
         
         df = pd.read_csv(
-            output_file,
-            sep=None,
-            engine='python',
-            on_bad_lines='skip',
-            encoding='utf-8'
+            DATA_FILE,
+            sep=CSV_SEP,
+            on_bad_lines=CSV_ON_BAD_LINES,
+            encoding=CSV_ENCODING
         )
         
-        print(f"Збережено: {output_file}")
+        print(f"Збережено: {DATA_FILE}")
         return df
     
     except Exception as e:
