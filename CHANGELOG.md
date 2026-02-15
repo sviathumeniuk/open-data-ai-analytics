@@ -16,7 +16,6 @@
 - `src/data_processing.py` - модуль для роботи з даними:
   - `load_data()` - завантаження CSV файлу
   - `process_data()` - обробка та очищення даних
-  - `load_and_process_data()` - комбінована функція
 - `src/visualizations.py` - модуль з функціями візуалізації:
   - `plot_registrations_by_year()` - графік реєстрацій за роками
   - `plot_seasonality()` - графіки сезонності
