@@ -33,6 +33,8 @@ jobs:
       - name: Install dependencies
         if: github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module
         run: |
+          python -m venv .temp_venv
+          source .temp_venv/bin/activate
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
