@@ -50,54 +50,45 @@ jobs:
         module: [data_processing, analysis, visualizations]
 
     steps:
+      - name: Determine if module should run
+        id: should_run
+        run: |
+          DISPATCH="${{ github.event_name == 'workflow_dispatch' }}"
+          INPUT_MODULE="${{ github.event.inputs.module }}"
+          MATRIX_MODULE="${{ matrix.module }}"
+          CHANGED="${{ needs.detect_changes.outputs[matrix.module] }}"
+
+          if [[ "$DISPATCH" == "true" && ("$INPUT_MODULE" == "all" || "$INPUT_MODULE" == "$MATRIX_MODULE") ]]; then
+            echo "result=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$DISPATCH" == "false" && "$CHANGED" == "true" ]]; then
+            echo "result=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout code
-        if: >-
-          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
-          (github.event_name != 'workflow_dispatch' &&
-            ((matrix.module == 'data_processing' && needs.detect_changes.outputs.data_processing == 'true') ||
-             (matrix.module == 'analysis' && needs.detect_changes.outputs.analysis == 'true') ||
-             (matrix.module == 'visualizations' && needs.detect_changes.outputs.visualizations == 'true')))
+        if: steps.should_run.outputs.result == 'true'
         uses: actions/checkout@v4
 
       - name: Set up Python
-        if: >-
-          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
-          (github.event_name != 'workflow_dispatch' &&
-            ((matrix.module == 'data_processing' && needs.detect_changes.outputs.data_processing == 'true') ||
-             (matrix.module == 'analysis' && needs.detect_changes.outputs.analysis == 'true') ||
-             (matrix.module == 'visualizations' && needs.detect_changes.outputs.visualizations == 'true')))
+        if: steps.should_run.outputs.result == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.14"
 
       - name: Install dependencies
-        if: >-
-          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
-          (github.event_name != 'workflow_dispatch' &&
-            ((matrix.module == 'data_processing' && needs.detect_changes.outputs.data_processing == 'true') ||
-             (matrix.module == 'analysis' && needs.detect_changes.outputs.analysis == 'true') ||
-             (matrix.module == 'visualizations' && needs.detect_changes.outputs.visualizations == 'true')))
+        if: steps.should_run.outputs.result == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Run module check
-        if: >-
-          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
-          (github.event_name != 'workflow_dispatch' &&
-            ((matrix.module == 'data_processing' && needs.detect_changes.outputs.data_processing == 'true') ||
-             (matrix.module == 'analysis' && needs.detect_changes.outputs.analysis == 'true') ||
-             (matrix.module == 'visualizations' && needs.detect_changes.outputs.visualizations == 'true')))
+        if: steps.should_run.outputs.result == 'true'
         run: |
           python -m py_compile src/${{ matrix.module }}.py
 
       - name: Generate results to artifacts/
-        if: >-
-          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
-          (github.event_name != 'workflow_dispatch' &&
-            ((matrix.module == 'data_processing' && needs.detect_changes.outputs.data_processing == 'true') ||
-             (matrix.module == 'analysis' && needs.detect_changes.outputs.analysis == 'true') ||
-             (matrix.module == 'visualizations' && needs.detect_changes.outputs.visualizations == 'true')))
+        if: steps.should_run.outputs.result == 'true'
         run: |
           mkdir -p artifacts/${{ matrix.module }}
           echo "Success" > artifacts/${{ matrix.module }}/log.txt
@@ -106,12 +97,7 @@ jobs:
           echo "module=${{ matrix.module }}" >> artifacts/${{ matrix.module }}/log.txt
 
       - name: Upload audit artifact
-        if: >-
-          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
-          (github.event_name != 'workflow_dispatch' &&
-            ((matrix.module == 'data_processing' && needs.detect_changes.outputs.data_processing == 'true') ||
-             (matrix.module == 'analysis' && needs.detect_changes.outputs.analysis == 'true') ||
-             (matrix.module == 'visualizations' && needs.detect_changes.outputs.visualizations == 'true')))
+        if: steps.should_run.outputs.result == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: audit-${{ matrix.module }}-${{ github.run_number }}
