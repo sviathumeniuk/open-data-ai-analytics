@@ -30,12 +30,6 @@ jobs:
         if: github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        if: github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
-
       - name: Install dependencies
         if: github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module
         run: |
