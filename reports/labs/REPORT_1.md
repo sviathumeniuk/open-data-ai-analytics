@@ -1,4 +1,4 @@
-# Звіт по лабораторній роботі
+# Звіт по лабораторній роботі 1
 
 ## Посилання на репозиторій
 
@@ -35,11 +35,11 @@ Pipeline виконує команду `python -m compileall src`, яка ком
 
 ## Git Log
 
-![alt text](reports/figures/git-log-graph.png)
+![alt text](../figures/git_status/git-log-graph.png)
 
 ## Workflow Status
 
 CI pipeline успішно налаштований та працює. Статус можна переглянути за посиланням:
 https://github.com/sviathumeniuk/open-data-ai-analytics/actions
 
-![alt text](reports/figures/ci-pipeline-status.png)
+![alt text](../figures/git_status/ci-pipeline-status.png)
