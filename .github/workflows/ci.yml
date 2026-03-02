@@ -1,5 +1,8 @@
 name: CI Pipeline
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: ["main"]
@@ -114,3 +117,22 @@ jobs:
           name: audit-${{ matrix.module }}-${{ github.run_number }}
           path: artifacts/${{ matrix.module }}
           if-no-files-found: error
+
+  deploy_pages:
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build reports index page
+        run: python scripts/build_reports_index.py
+
+      - name: Deploy reports to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./reports
+          force_orphan: true
