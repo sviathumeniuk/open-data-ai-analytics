@@ -20,7 +20,6 @@ on:
 jobs:
   build_and_test:
     runs-on: [self-hosted, linux]
-    if: github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module
     strategy:
       fail-fast: false
       matrix:
@@ -28,23 +27,28 @@ jobs:
 
     steps:
       - name: Checkout code
+        if: github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module
         uses: actions/checkout@v4
 
       - name: Set up Python
+        if: github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module
         uses: actions/setup-python@v5
         with:
           python-version: "3.14"
 
       - name: Install dependencies
+        if: github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Run module check
+        if: github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module
         run: |
           python -m py_compile src/${{ matrix.module }}.py
 
       - name: Generate results to artifacts/
+        if: github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module
         run: |
           mkdir -p artifacts/${{ matrix.module }}
           echo "Success" > artifacts/${{ matrix.module }}/log.txt
@@ -54,6 +58,7 @@ jobs:
           echo "runner=${{ runner.name }}" >> artifacts/${{ matrix.module }}/log.txt
 
       - name: Upload audit artifact
+        if: github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module
         uses: actions/upload-artifact@v4
         with:
           name: selfhosted-audit-${{ matrix.module }}-${{ github.run_number }}
