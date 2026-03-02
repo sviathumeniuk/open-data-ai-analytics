@@ -46,28 +46,71 @@ jobs:
       matrix:
         module: [data_processing, analysis, visualizations]
 
-    if: >-
-      (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
-      (github.event_name != 'workflow_dispatch' && needs.detect_changes.outputs[matrix.module] == 'true')
-
     steps:
       - name: Checkout code
+        if: >-
+          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
+          (github.event_name != 'workflow_dispatch' &&
+            ((matrix.module == 'data_processing' && needs.detect_changes.outputs.data_processing == 'true') ||
+             (matrix.module == 'analysis' && needs.detect_changes.outputs.analysis == 'true') ||
+             (matrix.module == 'visualizations' && needs.detect_changes.outputs.visualizations == 'true')))
         uses: actions/checkout@v4
 
       - name: Set up Python
+        if: >-
+          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
+          (github.event_name != 'workflow_dispatch' &&
+            ((matrix.module == 'data_processing' && needs.detect_changes.outputs.data_processing == 'true') ||
+             (matrix.module == 'analysis' && needs.detect_changes.outputs.analysis == 'true') ||
+             (matrix.module == 'visualizations' && needs.detect_changes.outputs.visualizations == 'true')))
         uses: actions/setup-python@v5
         with:
           python-version: "3.14"
 
       - name: Install dependencies
+        if: >-
+          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
+          (github.event_name != 'workflow_dispatch' &&
+            ((matrix.module == 'data_processing' && needs.detect_changes.outputs.data_processing == 'true') ||
+             (matrix.module == 'analysis' && needs.detect_changes.outputs.analysis == 'true') ||
+             (matrix.module == 'visualizations' && needs.detect_changes.outputs.visualizations == 'true')))
         run: |
           python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Run module check 
+      - name: Run module check
+        if: >-
+          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
+          (github.event_name != 'workflow_dispatch' &&
+            ((matrix.module == 'data_processing' && needs.detect_changes.outputs.data_processing == 'true') ||
+             (matrix.module == 'analysis' && needs.detect_changes.outputs.analysis == 'true') ||
+             (matrix.module == 'visualizations' && needs.detect_changes.outputs.visualizations == 'true')))
         run: |
           python -m py_compile src/${{ matrix.module }}.py
 
       - name: Generate results to artifacts/
+        if: >-
+          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
+          (github.event_name != 'workflow_dispatch' &&
+            ((matrix.module == 'data_processing' && needs.detect_changes.outputs.data_processing == 'true') ||
+             (matrix.module == 'analysis' && needs.detect_changes.outputs.analysis == 'true') ||
+             (matrix.module == 'visualizations' && needs.detect_changes.outputs.visualizations == 'true')))
         run: |
           mkdir -p artifacts/${{ matrix.module }}
           echo "Success" > artifacts/${{ matrix.module }}/log.txt
+          echo "run_id=${{ github.run_id }}" >> artifacts/${{ matrix.module }}/log.txt
+          echo "event=${{ github.event_name }}" >> artifacts/${{ matrix.module }}/log.txt
+          echo "module=${{ matrix.module }}" >> artifacts/${{ matrix.module }}/log.txt
+
+      - name: Upload audit artifact
+        if: >-
+          (github.event_name == 'workflow_dispatch' && (github.event.inputs.module == 'all' || github.event.inputs.module == matrix.module)) ||
+          (github.event_name != 'workflow_dispatch' &&
+            ((matrix.module == 'data_processing' && needs.detect_changes.outputs.data_processing == 'true') ||
+             (matrix.module == 'analysis' && needs.detect_changes.outputs.analysis == 'true') ||
+             (matrix.module == 'visualizations' && needs.detect_changes.outputs.visualizations == 'true')))
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-${{ matrix.module }}-${{ github.run_number }}
+          path: artifacts/${{ matrix.module }}
+          if-no-files-found: error
