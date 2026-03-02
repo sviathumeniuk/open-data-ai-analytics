@@ -1,6 +1,14 @@
+from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 from src.config import ANALYSIS_START_YEAR, ECONOMIC_EVENT_YEAR
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+OUTPUT_DIR = (PROJECT_ROOT / "reports" / "figures").resolve()
+
+def _ensure_output_dir() -> Path:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    return OUTPUT_DIR
 
 
 def plot_registrations_by_year(registrations_by_year: pd.Series) -> None:
@@ -10,6 +18,7 @@ def plot_registrations_by_year(registrations_by_year: pd.Series) -> None:
     plt.xlabel("Рiк")
     plt.ylabel("Кiлькiсть")
     plt.tight_layout()
+    plt.savefig(_ensure_output_dir() / "eda" / "registrations_by_year.png", dpi=300)
     plt.show()
 
 
@@ -31,6 +40,7 @@ def plot_seasonality(results: dict) -> None:
     axes[1].grid(True, alpha=0.3, axis="y")
 
     plt.tight_layout()
+    plt.savefig(_ensure_output_dir() / "hypothesis_1" / "hypothesis_1_seasonality.png", dpi=300)
     plt.show()
 
 
@@ -61,6 +71,7 @@ def plot_legal_forms(results: dict) -> None:
     axes[1].grid(True, alpha=0.3, axis="y")
 
     plt.tight_layout()
+    plt.savefig(_ensure_output_dir() / "hypothesis_2" / "hypothesis_2_legal_forms.png", dpi=300)
     plt.show()
 
 
@@ -102,4 +113,5 @@ def plot_economic_impact(results: dict) -> None:
         axes[1].text(i, v + v*0.02, f"{v:,.0f}", ha="center", va="bottom", fontweight="bold")
 
     plt.tight_layout()
+    plt.savefig(_ensure_output_dir() / "hypothesis_3" / "hypothesis_3_economic_impact.png", dpi=300)
     plt.show()
