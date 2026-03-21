@@ -1,0 +1,151 @@
+services:
+  db:
+    image: postgres:${POSTGRES_VERSION}
+    container_name: ${DB_CONTAINER_NAME}
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${DB_PORT_HOST}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - analytics_net
+
+  data_load:
+    build: ./data_load
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      TABLE_NAME: ${TABLE_NAME}
+      CSV_PATH: ${CSV_PATH}
+    volumes:
+      - ./raw:/workspace/raw:ro
+      - ./reports:/workspace/reports
+    networks:
+      - analytics_net
+    restart: "no"
+
+  data_quality_analysis:
+    build: ./data_quality_analysis
+    env_file:
+      - .env
+    depends_on:
+      data_load:
+        condition: service_completed_successfully
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      TABLE_NAME: ${TABLE_NAME}
+      QUALITY_REPORT_PATH: ${QUALITY_REPORT_PATH}
+    volumes:
+      - ./reports:/workspace/reports
+    networks:
+      - analytics_net
+    restart: "no"
+
+  data_research:
+    build: ./data_research
+    env_file:
+      - .env
+    depends_on:
+      data_quality_analysis:
+        condition: service_completed_successfully
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      TABLE_NAME: ${TABLE_NAME}
+      RESEARCH_REPORT_PATH: ${RESEARCH_REPORT_PATH}
+      ECONOMIC_EVENT_YEAR: ${ECONOMIC_EVENT_YEAR}
+    volumes:
+      - ./reports:/workspace/reports
+    networks:
+      - analytics_net
+    restart: "no"
+
+  visualization:
+    build: ./visualization
+    env_file:
+      - .env
+    depends_on:
+      data_research:
+        condition: service_completed_successfully
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      TABLE_NAME: ${TABLE_NAME}
+      FIGURES_ROOT: ${FIGURES_ROOT}
+      ECONOMIC_EVENT_YEAR: ${ECONOMIC_EVENT_YEAR}
+    volumes:
+      - ./reports:/workspace/reports
+    networks:
+      - analytics_net
+    restart: "no"
+
+  web:
+    build: ./web
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      data_quality_analysis:
+        condition: service_completed_successfully
+      data_research:
+        condition: service_completed_successfully
+      visualization:
+        condition: service_completed_successfully
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      FIGURES_ROOT: ${FIGURES_ROOT}
+    volumes:
+      - ./reports:/workspace/reports
+    ports:
+      - "${WEB_PORT_HOST}:8000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:8000/'', timeout=3)"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - analytics_net
+
+volumes:
+  db_data:
+
+networks:
+  analytics_net:
+    driver: bridge
