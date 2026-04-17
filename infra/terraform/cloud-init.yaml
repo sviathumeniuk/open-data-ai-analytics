@@ -1,0 +1,48 @@
+package_update: true
+
+runcmd:
+  # 1. Preparation
+  - dnf update -y
+  - dnf install -y git curl dnf-utils
+
+  # 2. Docker Stack
+  - dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+  - dnf install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+  - systemctl enable --now docker
+
+  # 3. Deployment
+  - mkdir -p /opt/app
+  - git clone https://github.com/sviathumeniuk/open-data-ai-analytics.git /opt/app
+
+  # 4. Environment
+  - |
+    cat <<EOF > /opt/app/.env
+    POSTGRES_VERSION=16-alpine
+    DB_CONTAINER_NAME=analytics-db
+
+    POSTGRES_DB=analytics
+    POSTGRES_USER=analytics
+    POSTGRES_PASSWORD=lab4_secret_pass
+
+    DB_HOST=db
+    DB_PORT=5432
+    DB_PORT_HOST=5432
+    DB_NAME=analytics
+    DB_USER=analytics
+    DB_PASSWORD=lab4_secret_pass
+
+    TABLE_NAME=vat_registry
+    CSV_PATH=/workspace/raw/pdv_actual_28-08-2019.csv
+    QUALITY_REPORT_PATH=/workspace/reports/data_quality/latest.json
+    RESEARCH_REPORT_PATH=/workspace/reports/data_research/summary.json
+    FIGURES_ROOT=/workspace/reports/figures
+    ECONOMIC_EVENT_YEAR=2014
+
+    WEB_PORT_HOST=8000
+    EOF
+
+  # 5. Launch
+  - cd /opt/app && docker compose up -d
+
+  # 6. Logging
+  - logger 'Cloud-init execution finished'
