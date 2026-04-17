@@ -85,18 +85,13 @@ resource "oci_core_security_list" "analytics_sl" {
   }
 }
 
-# 3. Compute інстанс (VM ARM Always Free)
+# 3. Compute інстанс (VM AMD Micro Always Free)
 resource "oci_core_instance" "analytics_instance" {
   compartment_id      = var.compartment_id
   # Використання першого знайденого AD
   availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
-  display_name        = "analytics-arm-vm"
-  shape               = "VM.Standard.A1.Flex"
-
-  shape_config {
-    ocpus         = 1
-    memory_in_gbs = 4
-  }
+  display_name        = "analytics-amd-vm"
+  shape               = "VM.Standard.E2.1.Micro"
 
   create_vnic_details {
     subnet_id        = oci_core_subnet.analytics_subnet.id
@@ -122,4 +117,6 @@ resource "oci_core_instance" "analytics_instance" {
 output "instance_public_ip" {
   value       = oci_core_instance.analytics_instance.public_ip
   description = "Публічна IP-адреса вашої аналітичної платформи"
+}
+еса вашої аналітичної платформи"
 }
