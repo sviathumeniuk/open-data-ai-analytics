@@ -1,7 +1,7 @@
 provider "oci" {
-  region = var.region
-  auth   = "InstancePrincipal"
-  tenancy_ocid     = var.compartment_id
+  region              = var.region
+  auth                = "SecurityToken"
+  config_file_profile = "DEFAULT"
 }
 
 # Динамічний пошук доступних доменів (Availability Domains)
