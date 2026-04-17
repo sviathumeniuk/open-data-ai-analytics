@@ -1,5 +1,6 @@
 provider "oci" {
   region = var.region
+  auth   = "InstancePrincipal"
 }
 
 # Динамічний пошук доступних доменів (Availability Domains)
