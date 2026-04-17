@@ -1,6 +1,7 @@
 provider "oci" {
   region = var.region
   auth   = "InstancePrincipal"
+  tenancy_ocid     = var.compartment_id
 }
 
 # Динамічний пошук доступних доменів (Availability Domains)
