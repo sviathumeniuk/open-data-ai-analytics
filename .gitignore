@@ -33,6 +33,9 @@ override.tf.json
 !/reports/**/
 !/reports/**/.gitkeep
 
+# Keep lab reports under version control
+!/reports/labs/REPORT_*.md
+
 # IDEs & System
 .DS_Store
 .vscode/
