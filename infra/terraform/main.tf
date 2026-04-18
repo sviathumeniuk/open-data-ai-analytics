@@ -1,25 +1,28 @@
 provider "oci" {
-  region              = var.region
-  auth                = "SecurityToken"
-  config_file_profile = "DEFAULT"
+  region = "eu-stockholm-1"
 }
 
-# Динамічний пошук доступних доменів (Availability Domains)
+variable "compartment_id" {
+  default = "ocid1.tenancy.oc1..aaaaaaaalmch37h7xdztb6gwgtyxipex7zpyzz6ya2gmdznpsy7owqreapha"
+}
+
+variable "ssh_public_key" {
+  default = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCx+GgXDYmkapBdUVn2INbPbxeo8+sKy9bGT36E5R8af4M2kF12PoOGJF76pZ9j9B03CWCNb96kCFxT+gbYvtcR+a/Z0bNlCT7smFjyrm6jb8/8fntJTx+hF3KCchxX/5YZGgR0EvOFVXEZyHEl+j4KpHv/OIxWsqi8Aa8FFWoIhXpoRKyNxPUtG65I8QptmzLOlnY1V11qb2KqG/64bbWuGdDtewPoP7hbvXAh/XjxxxjKYGH8ibpgirJLjlztogHOy47UkIrvXpcZkubk6FDfTOuy1jxkYkS8VT7mm05j4pEuIL8hD2QnvwNCVAUTXVzapMrvXYl9wbCGpdrZCsTBLQPGaI2DJhEDk+vob9w1zGY6Fun02mqePsOzn5BYb5r3zpZBbfcUTOMOuUcJsWhynuj8VX9GmnSqlXS2B3EAf6dtiixlzI3bATx4hGxv3n/hF/SA1HgcRjvCQ6w7VcaEdfNOwLTRDpZhTN5UKaLrhV++3nnzFPAv6TqpZ2SJI5d+cQQcIvnzEwl/6VetOhR0H/i7+5vGfUgFynLZhaRCZNxU28YURyOdNt8tSWtZljB0qzOZJfyiRCFi6nQDq+uXtLMNR9qjYEDbvB+mSOanSFp4o9K7gJHoeXWbPddkYrv4G70IUTndl3af+1w4B6AkGpE5kwYm5wxRbfWtt5MNyw== open-data-ai-analytics"
+}
+
 data "oci_identity_availability_domains" "ads" {
   compartment_id = var.compartment_id
 }
 
-# Динамічний пошук останнього образу Oracle Linux 9 для ARM (A1.Flex)
 data "oci_core_images" "oracle_linux_9" {
-  compartment_id = var.compartment_id
-  operating_system = "Oracle Linux"
+  compartment_id           = var.compartment_id
+  operating_system         = "Oracle Linux"
   operating_system_version = "9"
-  shape = "VM.Standard.A1.Flex"
-  sort_by = "TIMECREATED"
-  sort_order = "DESC"
+  shape                    = "VM.Standard.E2.1.Micro"
+  sort_by                  = "TIMECREATED"
+  sort_order               = "DESC"
 }
 
-# 1. Мережева інфраструктура (VCN та Subnet)
 resource "oci_core_vcn" "analytics_vcn" {
   compartment_id = var.compartment_id
   cidr_block     = "10.0.0.0/16"
@@ -55,14 +58,13 @@ resource "oci_core_route_table" "analytics_rt" {
   }
 }
 
-# 2. Список безпеки (відкриття портів 22 та 8000)
 resource "oci_core_security_list" "analytics_sl" {
   compartment_id = var.compartment_id
   vcn_id         = oci_core_vcn.analytics_vcn.id
   display_name   = "analytics_security_list"
 
   ingress_security_rules {
-    protocol = "6" # TCP
+    protocol = "6"
     source   = "0.0.0.0/0"
     tcp_options {
       min = 22
@@ -71,7 +73,7 @@ resource "oci_core_security_list" "analytics_sl" {
   }
 
   ingress_security_rules {
-    protocol = "6" # TCP
+    protocol = "6"
     source   = "0.0.0.0/0"
     tcp_options {
       min = 8000
@@ -85,10 +87,8 @@ resource "oci_core_security_list" "analytics_sl" {
   }
 }
 
-# 3. Compute інстанс (VM AMD Micro Always Free)
 resource "oci_core_instance" "analytics_instance" {
   compartment_id      = var.compartment_id
-  # Використання першого знайденого AD
   availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
   display_name        = "analytics-amd-vm"
   shape               = "VM.Standard.E2.1.Micro"
@@ -101,7 +101,6 @@ resource "oci_core_instance" "analytics_instance" {
 
   source_details {
     source_type = "image"
-    # Використання найсвіжішого знайденого образу
     source_id   = data.oci_core_images.oracle_linux_9.images[0].id
   }
 
@@ -113,10 +112,6 @@ resource "oci_core_instance" "analytics_instance" {
   preserve_boot_volume = false
 }
 
-# 4. Вихідні дані (Outputs)
 output "instance_public_ip" {
-  value       = oci_core_instance.analytics_instance.public_ip
-  description = "Публічна IP-адреса вашої аналітичної платформи"
-}
-еса вашої аналітичної платформи"
+  value = oci_core_instance.analytics_instance.public_ip
 }

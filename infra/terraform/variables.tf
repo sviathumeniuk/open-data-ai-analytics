@@ -1,14 +1,14 @@
 variable "compartment_id" {
-  description = "OCID вашого компартменту в OCI"
+  description = "OCI compartment OCID"
   type        = string
 }
 
 variable "region" {
-  description = "Регіон OCI (наприклад, eu-stockholm-1)"
+  description = "OCI region (e.g., eu-stockholm-1)"
   type        = string
 }
 
 variable "ssh_public_key" {
-  description = "Публічний SSH-ключ для доступу до інстансу"
+  description = "Public SSH key for instance access"
   type        = string
 }
