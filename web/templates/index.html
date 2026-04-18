@@ -1,216 +1,366 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Open Data AI Analytics</title>
-    <style>
-      :root {
-        color-scheme: light;
-        --bg: #f5f7fb;
-        --surface: #ffffff;
-        --text: #1f2937;
-        --muted: #6b7280;
-        --border: #dbe1ea;
-        --accent: #2563eb;
-      }
+{% extends "layout.html" %} {% block content %}
 
-      * {
-        box-sizing: border-box;
-      }
+<div class="mb-10 flex flex-col items-start gap-2">
+  <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">
+    Дашборд аналітики ПДВ
+  </h1>
+  <p class="text-slate-500 mt-1">
+    Огляд реєстру платників ПДВ станом на сьогодні
+  </p>
+</div>
 
-      body {
-        font-family:
-          Inter,
-          system-ui,
-          -apple-system,
-          "Segoe UI",
-          Roboto,
-          Arial,
-          sans-serif;
-        margin: 0;
-        padding: 32px 20px 40px;
-        background: var(--bg);
-        color: var(--text);
-        line-height: 1.45;
-      }
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+  <div
+    class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"
+  >
+    <div class="flex justify-between items-start">
+      <div>
+        <p
+          class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1"
+        >
+          Total Entities
+        </p>
+        <h3 class="text-3xl font-bold text-slate-800">{{ stats.total }}</h3>
+      </div>
+      <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+        <i class="fas fa-database text-lg"></i>
+      </div>
+    </div>
+    <p class="text-xs text-slate-400 mt-4 flex items-center gap-1 font-medium">
+      <i class="fas fa-info-circle"></i> Усього в реєстрі
+    </p>
+  </div>
 
-      body > * {
-        max-width: 1120px;
-        margin-left: auto;
-        margin-right: auto;
-      }
+  <div
+    class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"
+  >
+    <div class="flex justify-between items-start">
+      <div>
+        <p
+          class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1"
+        >
+          Active Businesses
+        </p>
+        <h3 class="text-3xl font-bold text-emerald-500">{{ stats.active }}</h3>
+      </div>
+      <div class="p-2 bg-emerald-50 text-emerald-500 rounded-lg">
+        <i class="fas fa-briefcase text-lg"></i>
+      </div>
+    </div>
+    <p class="text-xs text-slate-400 mt-4 flex items-center gap-1 font-medium">
+      <i class="fas fa-check-circle text-emerald-500"></i> Компанії працюють
+    </p>
+  </div>
 
-      h1,
-      h2 {
-        margin-bottom: 12px;
-      }
+  <div
+    class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"
+  >
+    <div class="flex justify-between items-start">
+      <div>
+        <p
+          class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1"
+        >
+          Termination Rate
+        </p>
+        <h3 class="text-3xl font-bold text-rose-500">{{ stats.term_rate }}%</h3>
+      </div>
+      <div class="p-2 bg-rose-50 text-rose-500 rounded-lg">
+        <i class="fas fa-ban text-lg"></i>
+      </div>
+    </div>
+    <div class="w-full bg-slate-100 h-1.5 rounded-full mt-4 overflow-hidden">
+      <div
+        class="bg-rose-500 h-full rounded-full"
+        style="width: {{ stats.term_rate }}%"
+      ></div>
+    </div>
+  </div>
 
-      h1 {
-        margin-top: 0;
-        font-size: 2rem;
-        line-height: 1.2;
-      }
+  <div
+    class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"
+  >
+    <div class="flex justify-between items-start">
+      <div>
+        <p
+          class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1"
+        >
+          Monthly Velocity
+        </p>
+        <h3 class="text-3xl font-bold text-blue-600">{{ stats.velocity }}</h3>
+      </div>
+      <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+        <i class="fas fa-bolt text-lg"></i>
+      </div>
+    </div>
+    <p class="text-xs text-slate-400 mt-4 flex items-center gap-1 font-medium">
+      <i class="fas fa-plus text-blue-600"></i> Реєстрацій / місяць
+    </p>
+  </div>
+</div>
 
-      h2 {
-        margin-top: 28px;
-        font-size: 1.3rem;
-        border-bottom: 2px solid var(--border);
-        padding-bottom: 6px;
-      }
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+  <div
+    class="lg:col-span-2 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm"
+  >
+    <div class="flex justify-between items-center mb-8">
+      <h4 class="font-bold text-slate-800 text-lg">
+        Динаміка реєстрацій за роками
+      </h4>
+      <div
+        class="text-xs font-semibold text-slate-400 border border-slate-100 px-3 py-1 rounded-full uppercase tracking-widest"
+      >
+        Line Chart
+      </div>
+    </div>
+    <div class="h-72">
+      <canvas id="timelineChart"></canvas>
+    </div>
+  </div>
 
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 16px;
-      }
+  <div
+    class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center"
+  >
+    <div class="w-full flex justify-between items-center mb-10">
+      <h4 class="font-bold text-slate-800 text-lg">Статус ринку</h4>
+    </div>
+    <div class="w-full h-56 relative flex justify-center">
+      <canvas id="pieChart"></canvas>
+    </div>
+    <div class="w-full mt-8 grid grid-cols-2 gap-4 text-center">
+      <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+        <p class="text-[10px] font-bold text-emerald-600 uppercase">Активні</p>
+        <p class="text-xl font-bold text-slate-800">{{ stats.active }}</p>
+      </div>
+      <div class="p-3 rounded-xl bg-rose-50 border border-rose-100">
+        <p class="text-[10px] font-bold text-rose-600 uppercase">Закриті</p>
+        <p class="text-xl font-bold text-slate-800">
+          {{ stats.total - stats.active }}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
 
-      .card {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 14px;
-        background: var(--surface);
-        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
-      }
+<div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm mb-12">
+  <div class="flex justify-between items-center mb-8">
+    <h4 class="font-bold text-slate-800 text-lg">
+      Порівняння: Реєстрація vs Анулювання
+    </h4>
+    <div
+      class="text-xs font-semibold text-slate-400 border border-slate-100 px-3 py-1 rounded-full uppercase tracking-widest"
+    >
+      Stacked Bar
+    </div>
+  </div>
+  <div class="h-80">
+    <canvas id="stackedBarChart"></canvas>
+  </div>
+</div>
 
-      table {
-        border-collapse: collapse;
-        width: 100%;
-        margin-bottom: 20px;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        overflow: hidden;
-      }
-
-      th,
-      td {
-        border: 1px solid var(--border);
-        padding: 10px 12px;
-        text-align: left;
-      }
-
-      th {
-        background: #eef3ff;
-        font-weight: 600;
-      }
-
-      tbody tr:nth-child(even) {
-        background: #fafcff;
-      }
-
-      img {
-        width: 100%;
-        height: auto;
-        max-height: 260px;
-        object-fit: contain;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        background: #fff;
-      }
-
-      code {
-        display: block;
-        white-space: pre-wrap;
-        word-break: break-word;
-        margin-top: 8px;
-        padding: 8px 10px;
-        border-radius: 8px;
-        background: #f7f9fc;
-        border: 1px solid var(--border);
-        color: #0f172a;
-      }
-
-      .figure-link {
-        display: block;
-        text-decoration: none;
-        color: inherit;
-        transition: transform 0.15s ease;
-      }
-
-      .figure-link:hover {
-        transform: translateY(-2px);
-      }
-
-      .open-link {
-        display: inline-block;
-        margin-top: 8px;
-        color: var(--accent);
-      }
-
-      p {
-        color: var(--muted);
-      }
-
-      @media (max-width: 720px) {
-        body {
-          padding: 20px 12px 28px;
-        }
-
-        h1 {
-          font-size: 1.6rem;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Open Data AI Analytics</h1>
-
-    <h2>Data Quality</h2>
-    {% if quality_metrics %}
-    <table>
-      <thead>
-        <tr>
-          <th>Metric</th>
-          <th>Value</th>
+<div
+  class="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden"
+>
+  <div
+    class="p-8 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-6"
+  >
+    <div>
+      <h4 class="font-bold text-slate-800 text-xl tracking-tight">
+        Список підприємств
+      </h4>
+      <p class="text-sm text-slate-500 mt-1">Останні 100 записів реєстру</p>
+    </div>
+    <div class="relative w-full md:w-96 group">
+      <i
+        class="fas fa-search absolute left-4 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors"
+      ></i>
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Пошук за назвою або кодом ЄДРПОУ..."
+        class="w-full pl-12 pr-6 py-3.5 text-sm rounded-2xl border border-slate-200 bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:outline-none transition-all shadow-sm"
+      />
+    </div>
+  </div>
+  <div>
+    <table class="w-full table-fixed text-left text-sm">
+      <thead class="bg-slate-50">
+        <tr class="text-slate-400 border-b border-slate-100">
+          <th
+            class="px-4 md:px-8 py-5 font-bold uppercase tracking-wider text-[10px]"
+          >
+            Юридична особа
+          </th>
+          <th
+            class="px-4 md:px-8 py-5 font-bold uppercase tracking-wider text-[10px] text-center"
+          >
+            Код ЄДРПОУ
+          </th>
+          <th
+            class="px-4 md:px-8 py-5 font-bold uppercase tracking-wider text-[10px]"
+          >
+            Реєстрація
+          </th>
+          <th
+            class="px-4 md:px-8 py-5 font-bold uppercase tracking-wider text-[10px]"
+          >
+            Статус
+          </th>
         </tr>
       </thead>
-      <tbody>
-        {% for item in quality_metrics %}
-        <tr>
-          <td>{{ item.metric }}</td>
-          <td>{{ item.value }}</td>
+      <tbody id="dataTable" class="divide-y divide-slate-50">
+        {% for row in data %}
+        <tr class="group hover:bg-slate-50/80 transition cursor-default">
+          <td class="px-4 md:px-8 py-5 align-top">
+            <div class="flex items-center gap-3 min-w-0">
+              <div
+                class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs uppercase group-hover:bg-blue-600 group-hover:text-white transition-colors"
+              >
+                {{ row.name[0] }}
+              </div>
+              <span
+                class="font-semibold text-slate-700 break-words min-w-0 flex-1"
+                >{{ row.name }}</span
+              >
+            </div>
+          </td>
+          <td class="px-4 md:px-8 py-5 text-center align-top">
+            <span
+              class="font-mono text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg text-xs whitespace-normal break-all inline-block"
+              >{{ row.code }}</span
+            >
+          </td>
+          <td
+            class="px-4 md:px-8 py-5 text-slate-500 font-medium align-top break-words"
+          >
+            {{ row.dat_reestr }}
+          </td>
+          <td class="px-4 md:px-8 py-5 align-top">
+            {% if not row.dat_term %}
+            <div
+              class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold uppercase rounded-full border border-emerald-100"
+            >
+              <span
+                class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"
+              ></span>
+              Активний
+            </div>
+            {% else %}
+            <div
+              class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold uppercase rounded-full border border-slate-200"
+            >
+              Анульовано
+            </div>
+            {% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-    {% else %}
-    <p>No data quality metrics found yet.</p>
-    {% endif %}
+  </div>
+</div>
 
-    <h2>Research Results</h2>
-    {% if research_results %}
-    <div class="grid">
-      {% for item in research_results %}
-      <div class="card">
-        <strong>{{ item.key }}</strong>
-        <code>{{ item.value }}</code>
-      </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <p>No research results found yet.</p>
-    {% endif %}
+<script>
+  const timelineLabels = {{ chart.timeline_labels | tojson }};
+  const timelineValues = {{ chart.timeline_values | tojson }};
 
-    <h2>Visualizations</h2>
-    {% if figures %}
-    <div class="grid">
-      {% for figure in figures %}
-      <div class="card">
-        <a
-          class="figure-link"
-          href="/figures/{{ figure }}"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="/figures/{{ figure }}" alt="{{ figure }}" />
-        </a>
-        <div>{{ figure }}</div>
-      </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <p>No figures generated yet.</p>
-    {% endif %}
-  </body>
-</html>
+  const activeCount = {{ stats.active }};
+  const terminatedCount = {{ stats.total - stats.active }};
+
+  const barLabels = {{ chart.bar_labels | tojson }};
+  const barNew = {{ chart.bar_new | tojson }};
+  const barTerm = {{ chart.bar_term | tojson }};
+
+  Chart.defaults.font.family = "'Inter', sans-serif";
+  Chart.defaults.color = "#94a3b8";
+
+  new Chart(document.getElementById('timelineChart').getContext('2d'), {
+      type: 'line',
+      data: {
+          labels: timelineLabels,
+          datasets: [{
+              label: 'Реєстрації',
+              data: timelineValues,
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37, 99, 235, 0.05)',
+              borderWidth: 4,
+              fill: true,
+              tension: 0.45,
+              pointBackgroundColor: '#fff',
+              pointBorderColor: '#2563eb',
+              pointBorderWidth: 2,
+              pointRadius: 4,
+              pointHoverRadius: 6
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+              y: { beginAtZero: true, grid: { borderDash: [8, 8], color: '#f1f5f9', drawBorder: false } },
+              x: { grid: { display: false } }
+          }
+      }
+  });
+
+  new Chart(document.getElementById('pieChart').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+          labels: ['Активні', 'Анульовані'],
+          datasets: [{
+              data: [activeCount, terminatedCount],
+              backgroundColor: ['#10b981', '#cbd5e1'],
+              hoverBackgroundColor: ['#059669', '#94a3b8'],
+              borderWidth: 0,
+              cutout: '82%'
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } }
+      }
+  });
+
+  new Chart(document.getElementById('stackedBarChart').getContext('2d'), {
+      type: 'bar',
+      data: {
+          labels: barLabels,
+          datasets: [
+              {
+                  label: 'Нові реєстрації',
+                  data: barNew,
+                  backgroundColor: '#2563eb',
+                  borderRadius: 6
+              },
+              {
+                  label: 'Анульовані',
+                  data: barTerm,
+                  backgroundColor: '#f43f5e',
+                  borderRadius: 6
+              }
+          ]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 30 } } },
+          scales: {
+              y: { stacked: true, grid: { borderDash: [8, 8], color: '#f1f5f9' } },
+              x: { stacked: true, grid: { display: false } }
+          }
+      }
+  });
+
+  document.getElementById('searchInput').addEventListener('keyup', function() {
+      const filter = this.value.toUpperCase();
+      const rows = document.querySelector("#dataTable").rows;
+      for (let row of rows) {
+          const name = row.cells[0].textContent.toUpperCase();
+          const code = row.cells[1].textContent.toUpperCase();
+          row.style.display = (name.includes(filter) || code.includes(filter)) ? "" : "none";
+      }
+  });
+</script>
+
+{% endblock %}

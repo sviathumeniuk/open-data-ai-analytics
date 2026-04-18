@@ -1,0 +1,25 @@
+services:
+  pipeline:
+    build:
+      context: ./pipeline
+    container_name: analytics-pipeline
+    env_file: .env
+    volumes:
+      - ./data:/workspace/data
+      - ./raw:/workspace/raw:ro
+      - ./reports:/workspace/reports
+
+  web:
+    build:
+      context: ./web
+    container_name: analytics-web
+    restart: no
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/workspace/data
+      - ./reports:/workspace/reports
+    depends_on:
+      pipeline:
+        condition: service_completed_successfully

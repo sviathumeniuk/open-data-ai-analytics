@@ -1,87 +1,77 @@
 import os
+import sqlite3
+import json
 from pathlib import Path
-
-import psycopg2
 from flask import Flask, render_template, send_from_directory
 
-
-DB_HOST = os.environ["DB_HOST"]
-DB_PORT = int(os.environ["DB_PORT"])
-DB_NAME = os.environ["DB_NAME"]
-DB_USER = os.environ["DB_USER"]
-DB_PASSWORD = os.environ["DB_PASSWORD"]
-FIGURES_ROOT = Path(os.environ["FIGURES_ROOT"])
+SQLITE_DB_PATH = os.environ.get("SQLITE_DB_PATH", "data/analytics.db")
+TABLE_NAME = os.environ.get("TABLE_NAME", "vat_registry")
 
 app = Flask(__name__)
 
+def get_db():
+    conn = sqlite3.connect(SQLITE_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-def get_connection():
-    return psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD,
-    )
+def get_dashboard_stats():
+    stats = {}
+    with get_db() as conn:
+        stats['total'] = conn.execute(f"SELECT count(*) FROM {TABLE_NAME}").fetchone()[0]
+        
+        stats['active'] = conn.execute(f"SELECT count(*) FROM {TABLE_NAME} WHERE dat_term IS NULL").fetchone()[0]
+        
+        stats['term_rate'] = round(((stats['total'] - stats['active']) / stats['total'] * 100), 1) if stats['total'] > 0 else 0
+        
+        velocity_query = f"SELECT count(*) FROM {TABLE_NAME} WHERE dat_reestr IS NOT NULL"
+        velocity_total = conn.execute(velocity_query).fetchone()[0]
+        stats['velocity'] = round(velocity_total / 12, 1) # Спрощено для дашборду
+        
+    return stats
 
+def get_chart_data():
+    chart = {}
+    with get_db() as conn:
+        timeline = conn.execute(f"""
+            SELECT strftime('%Y', dat_reestr) as yr, count(*) as cnt 
+            FROM {TABLE_NAME} 
+            WHERE dat_reestr IS NOT NULL 
+            GROUP BY yr ORDER BY yr
+        """).fetchall()
+        chart['timeline_labels'] = [r['yr'] for r in timeline]
+        chart['timeline_values'] = [r['cnt'] for r in timeline]
+        
+        bar_data = conn.execute(f"""
+            SELECT 
+                strftime('%Y', dat_reestr) as yr,
+                count(*) as new_cnt,
+                sum(case when dat_term is not null then 1 else 0 end) as term_cnt
+            FROM {TABLE_NAME}
+            WHERE dat_reestr IS NOT NULL
+            GROUP BY yr ORDER BY yr DESC LIMIT 10
+        """).fetchall()
+        
+        bar_data = bar_data[::-1]
+        chart['bar_labels'] = [r['yr'] for r in bar_data]
+        chart['bar_new'] = [r['new_cnt'] for r in bar_data]
+        chart['bar_term'] = [r['term_cnt'] for r in bar_data]
+        
+    return chart
 
-def load_quality_metrics() -> list[dict]:
-    query = """
-        SELECT metric, value
-        FROM data_quality_metrics
-        ORDER BY metric
-    """
-    try:
-        with get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(query)
-                rows = cursor.fetchall()
-                return [{"metric": row[0], "value": row[1]} for row in rows]
-    except Exception:
-        return []
-
-
-def load_research_results() -> list[dict]:
-    query = """
-        SELECT result_key, result_value::text
-        FROM research_results
-        ORDER BY result_key
-    """
-    try:
-        with get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(query)
-                rows = cursor.fetchall()
-                return [{"key": row[0], "value": row[1]} for row in rows]
-    except Exception:
-        return []
-
-
-def list_figures() -> list[str]:
-    if not FIGURES_ROOT.exists():
-        return []
-    images = [
-        str(path.relative_to(FIGURES_ROOT)).replace("\\", "/")
-        for path in FIGURES_ROOT.rglob("*")
-        if path.is_file() and path.suffix.lower() in {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
-    ]
-    return sorted(images)
-
-
-@app.route("/", methods=["GET"])
+@app.route("/")
 def index():
+    stats = get_dashboard_stats()
+    chart = get_chart_data()
+    
+    with get_db() as conn:
+        data = conn.execute(f"SELECT * FROM {TABLE_NAME} LIMIT 100").fetchall()
+    
     return render_template(
         "index.html",
-        quality_metrics=load_quality_metrics(),
-        research_results=load_research_results(),
-        figures=list_figures(),
+        stats=stats,
+        chart=chart,
+        data=data
     )
-
-
-@app.route("/figures/<path:filename>", methods=["GET"])
-def figures(filename: str):
-    return send_from_directory(FIGURES_ROOT, filename)
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
