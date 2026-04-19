@@ -1,13 +1,10 @@
 provider "oci" {
-  region = "eu-stockholm-1"
-}
-
-variable "compartment_id" {
-  default = "ocid1.tenancy.oc1..aaaaaaaalmch37h7xdztb6gwgtyxipex7zpyzz6ya2gmdznpsy7owqreapha"
-}
-
-variable "ssh_public_key" {
-  default = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCx+GgXDYmkapBdUVn2INbPbxeo8+sKy9bGT36E5R8af4M2kF12PoOGJF76pZ9j9B03CWCNb96kCFxT+gbYvtcR+a/Z0bNlCT7smFjyrm6jb8/8fntJTx+hF3KCchxX/5YZGgR0EvOFVXEZyHEl+j4KpHv/OIxWsqi8Aa8FFWoIhXpoRKyNxPUtG65I8QptmzLOlnY1V11qb2KqG/64bbWuGdDtewPoP7hbvXAh/XjxxxjKYGH8ibpgirJLjlztogHOy47UkIrvXpcZkubk6FDfTOuy1jxkYkS8VT7mm05j4pEuIL8hD2QnvwNCVAUTXVzapMrvXYl9wbCGpdrZCsTBLQPGaI2DJhEDk+vob9w1zGY6Fun02mqePsOzn5BYb5r3zpZBbfcUTOMOuUcJsWhynuj8VX9GmnSqlXS2B3EAf6dtiixlzI3bATx4hGxv3n/hF/SA1HgcRjvCQ6w7VcaEdfNOwLTRDpZhTN5UKaLrhV++3nnzFPAv6TqpZ2SJI5d+cQQcIvnzEwl/6VetOhR0H/i7+5vGfUgFynLZhaRCZNxU28YURyOdNt8tSWtZljB0qzOZJfyiRCFi6nQDq+uXtLMNR9qjYEDbvB+mSOanSFp4o9K7gJHoeXWbPddkYrv4G70IUTndl3af+1w4B6AkGpE5kwYm5wxRbfWtt5MNyw== open-data-ai-analytics"
+  region           = var.region
+  auth             = "ApiKey"
+  tenancy_ocid     = var.tenancy_ocid
+  user_ocid        = var.user_ocid
+  fingerprint      = var.fingerprint
+  private_key_path = var.private_key_path
 }
 
 data "oci_identity_availability_domains" "ads" {

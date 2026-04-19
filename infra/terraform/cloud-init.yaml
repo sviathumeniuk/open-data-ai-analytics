@@ -8,17 +8,31 @@ runcmd:
   - swapon /swapfile
   - echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
-  - dnf install -y git
+  - mkdir -p /tmp/docker-rpms
+  - cd /tmp/docker-rpms
 
-  - wget -qO- https://get.docker.com/ | sh
+  - wget -q https://repo.almalinux.org/vault/9.2/AppStream/x86_64/os/Packages/container-selinux-2.205.0-1.el9_2.noarch.rpm
+  - wget -q https://download.docker.com/linux/centos/9/x86_64/stable/Packages/containerd.io-1.6.31-3.1.el9.x86_64.rpm
+  - wget -q https://download.docker.com/linux/centos/9/x86_64/stable/Packages/docker-ce-cli-24.0.9-1.el9.x86_64.rpm
+  - wget -q https://download.docker.com/linux/centos/9/x86_64/stable/Packages/docker-ce-24.0.9-1.el9.x86_64.rpm
+  - wget -q https://download.docker.com/linux/centos/9/x86_64/stable/Packages/docker-buildx-plugin-0.14.0-1.el9.x86_64.rpm
+  - wget -q https://download.docker.com/linux/centos/9/x86_64/stable/Packages/docker-compose-plugin-2.26.1-1.el9.x86_64.rpm
+
+  - rpm -ivh container-selinux-2.205.0-1.el9_2.noarch.rpm
+  - rpm -ivh containerd.io-1.6.31-3.1.el9.x86_64.rpm
+  - rpm -ivh docker-ce-cli-24.0.9-1.el9.x86_64.rpm
+  - rpm -ivh docker-ce-24.0.9-1.el9.x86_64.rpm
+  - rpm -ivh docker-buildx-plugin-0.14.0-1.el9.x86_64.rpm
+  - rpm -ivh docker-compose-plugin-2.26.1-1.el9.x86_64.rpm
+
   - systemctl enable --now docker
   - usermod -aG docker opc
 
   - mkdir -p /opt/app
-  - git clone https://github.com/sviathumeniuk/open-data-ai-analytics.git /opt/app
+  - curl -L https://github.com/sviathumeniuk/open-data-ai-analytics/tarball/main | tar -xz -C /opt/app --strip-components=1
 
   - |
-    cat <<EOF > /opt/app/.env
+    cat <<INNER_EOF > /opt/app/.env
     SQLITE_DB_PATH=/workspace/data/analytics.db
     TABLE_NAME=vat_registry
     CSV_PATH=/workspace/raw/pdv_actual_28-08-2019.csv
@@ -26,9 +40,7 @@ runcmd:
     QUALITY_REPORT_PATH=/workspace/reports/data_quality/latest.json
     RESEARCH_REPORT_PATH=/workspace/reports/data_research/summary.json
     ECONOMIC_EVENT_YEAR=2014
-    EOF
+    INNER_EOF
 
   - mkdir -p /opt/app/data
   - cd /opt/app && docker compose up -d --build
-
-  - logger 'Cloud-init FINISHED: Analytics project is live!'
