@@ -3,11 +3,14 @@ import sqlite3
 import json
 from pathlib import Path
 from flask import Flask, render_template, send_from_directory
+from prometheus_client import start_http_server, Counter
 
 SQLITE_DB_PATH = os.environ.get("SQLITE_DB_PATH", "data/analytics.db")
 TABLE_NAME = os.environ.get("TABLE_NAME", "vat_registry")
 
 app = Flask(__name__)
+
+REQUEST_COUNT = Counter('http_requests_total', 'Total HTTP Requests', ['method', 'endpoint'])
 
 def get_db():
     conn = sqlite3.connect(SQLITE_DB_PATH)
@@ -58,6 +61,10 @@ def get_chart_data():
         
     return chart
 
+@app.before_request
+def count_requests():
+    REQUEST_COUNT.labels(method='GET', endpoint='/').inc()
+
 @app.route("/")
 def index():
     stats = get_dashboard_stats()
@@ -74,4 +81,6 @@ def index():
     )
 
 if __name__ == "__main__":
+    # Start Prometheus metrics server
+    start_http_server(8001)
     app.run(host="0.0.0.0", port=8000)
