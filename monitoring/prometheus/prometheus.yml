@@ -14,6 +14,11 @@ scrape_configs:
   - job_name: 'cadvisor'
     static_configs:
       - targets: ['cadvisor:8080']
+    metric_relabel_configs:
+      - source_labels: [name]
+        regex: '^/(.*)'
+        replacement: '$1'
+        target_label: name
 
   - job_name: 'analytics-web'
     static_configs:

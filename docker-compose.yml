@@ -81,6 +81,7 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.49.1
     container_name: cadvisor
+    privileged: true
     restart: unless-stopped
     volumes:
       - /:/rootfs:ro
@@ -88,6 +89,8 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
+    devices:
+    - /dev/kmsg
     ports:
       - "8080:8080"
     deploy:
