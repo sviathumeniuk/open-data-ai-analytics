@@ -25,8 +25,6 @@ spec:
           volumeMounts:
             - name: data-storage
               mountPath: /workspace/data
-            - name: reports-storage
-              mountPath: /workspace/reports
       containers:
         - name: web
           image: ghcr.io/sviathumeniuk/open-data-ai-analytics:latest
@@ -38,12 +36,7 @@ spec:
           volumeMounts:
             - name: data-storage
               mountPath: /workspace/data
-            - name: reports-storage
-              mountPath: /workspace/reports
       volumes:
         - name: data-storage
-          persistentVolumeClaim:
-            claimName: analytics-data-pvc
-        - name: reports-storage
           persistentVolumeClaim:
             claimName: analytics-data-pvc
