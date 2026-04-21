@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-web
+  namespace: analytics
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: analytics
+  template:
+    metadata:
+      labels:
+        app: analytics
+    spec:
+      initContainers:
+        - name: pipeline
+          image: ghcr.io/sviathumeniuk/open-data-ai-analytics:latest
+          command: ["python", "pipeline/run_all.py"]
+          env:
+            - name: SQLITE_DB_PATH
+              value: "/workspace/data/analytics.db"
+            - name: CSV_PATH
+              value: "/workspace/raw/pdv_actual_28-08-2019.csv"
+          volumeMounts:
+            - name: data-storage
+              mountPath: /workspace/data
+            - name: reports-storage
+              mountPath: /workspace/reports
+      containers:
+        - name: web
+          image: ghcr.io/sviathumeniuk/open-data-ai-analytics:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SQLITE_DB_PATH
+              value: "/workspace/data/analytics.db"
+          volumeMounts:
+            - name: data-storage
+              mountPath: /workspace/data
+            - name: reports-storage
+              mountPath: /workspace/reports
+      volumes:
+        - name: data-storage
+          persistentVolumeClaim:
+            claimName: analytics-data-pvc
+        - name: reports-storage
+          persistentVolumeClaim:
+            claimName: analytics-data-pvc

@@ -1,16 +1,25 @@
 FROM python:3.11-slim
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /workspace
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+# Копіюємо залежності та встановлюємо їх
+COPY web/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
-COPY requirements.txt /tmp/requirements.txt
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+# Копіюємо код веб-додатка та пайплайна
+COPY web/ ./web/
+COPY pipeline/ ./pipeline/
 
-COPY . ./web/
-RUN mkdir -p data reports
+# Встановлюємо змінні середовища
+ENV PYTHONUNBUFFERED=1
+ENV FLASK_APP=web/app.py
+ENV PYTHONPATH=/workspace
 
 EXPOSE 8000
 
-CMD ["python", "web/app.py"]
+# Запускаємо через gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "web.app:app"]
