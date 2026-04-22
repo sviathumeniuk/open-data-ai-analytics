@@ -1,7 +1,6 @@
 import os
 import sqlite3
 import json
-import re
 import pandas as pd
 from pathlib import Path
 
