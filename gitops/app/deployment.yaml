@@ -15,7 +15,7 @@ spec:
     spec:
       initContainers:
         - name: pipeline
-          image: ghcr.io/sviathumeniuk/open-data-ai-analytics:latest
+          image: ghcr.io/sviathumeniuk/open-data-ai-analytics:sha-placeholder
           command: ["python", "pipeline/run_all.py"]
           env:
             - name: SQLITE_DB_PATH
@@ -27,7 +27,7 @@ spec:
               mountPath: /workspace/data
       containers:
         - name: web
-          image: ghcr.io/sviathumeniuk/open-data-ai-analytics:latest
+          image: ghcr.io/sviathumeniuk/open-data-ai-analytics:sha-placeholder
           ports:
             - containerPort: 8000
           env:

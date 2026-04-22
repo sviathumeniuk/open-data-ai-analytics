@@ -1,20 +1,16 @@
 name: Build and Push Docker Image
-
 on:
   push:
     branches: [ "main" ]
-
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: sviathumeniuk/open-data-ai-analytics
-
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,7 +29,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest
-            type=sha,format=long
+            type=raw,value=sha-${{ github.sha }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -44,3 +40,11 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Update deployment image tag
+        run: |
+          sed -i "s|ghcr.io/sviathumeniuk/open-data-ai-analytics:sha-.*|ghcr.io/sviathumeniuk/open-data-ai-analytics:sha-${{ github.sha }}|g" gitops/app/deployment.yaml
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add gitops/app/deployment.yaml
+          git commit -m "ci: update image tag to sha-${{ github.sha }}"
+          git push
