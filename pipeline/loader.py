@@ -3,7 +3,6 @@ import pandas as pd
 from pathlib import Path
 import os
 
-# Пріоритет на змінні оточення для K8s
 DB_PATH = os.getenv("SQLITE_DB_PATH", "/workspace/data/analytics.db")
 CSV_PATH = Path(os.getenv("CSV_PATH", "/workspace/raw/pdv_actual_28-08-2019.csv"))
 
